@@ -1,0 +1,253 @@
+#!/bin/bash
+
+#-----------------------------------------------------------#
+# @author: dep
+# @link: https://github.com/demmonico
+# @package: https://github.com/demmonico/bash
+#
+# @use: sudo ./newsite.sh [PARAMS]
+# params:
+# -n [SITENAME] (required)
+# -u [USERNAME] (owner's username, default - current username)
+# -g [USERGROUP] (owner's groupname, default - option -n [SITENAME])
+#-----------------------------------------------------------#
+
+
+
+# die
+function die
+{
+    local msg=$@;
+    if [ -n "$msg" ]; then
+        msg="Error: $msg";
+    fi;
+    echo "$msg" 1>&2;
+    exit 1;
+}
+
+
+
+# create user group
+function createGroup
+{
+    echo "Creating new group for current site ...";
+
+    # set required params
+    groupname=$1;
+    if [ -z "$groupname" ]; then
+        echo "Sitename will be use as a groupname";
+        groupname=$2;
+    fi;
+
+    # add group
+    if ! grep -q $groupname /etc/group; then
+        sudo groupadd $groupname
+        echo "Group \"$groupname\" was added successfully";
+    else
+        read -p "Group \"$groupname\" already exists. Would you like to create another group (y/n)? " choice
+        case "$choice" in
+            y|Y )
+                read -p "Enter new groupname which will own this site folder: " groupname;
+                createGroup $groupname $2;;
+            * );;
+        esac
+    fi;
+}
+
+
+
+# create user to group
+function addGroupUser
+{
+    echo "Adding user to group ...";
+
+    # set username
+    if [ -z "$username" ]; then
+        read -p "Enter username which will be added to group \"$groupname\": " username
+    fi;
+    if [ -z "$username" ]; then
+        die "Username required";
+    fi;
+
+    # add user to group
+    if getent group $username | grep &>/dev/null $groupname; then
+        echo "User \"$username\" already exists in group \"$groupname\"";
+    else
+        sudo usermod -a -G $groupname $username
+        echo "User \"$username\" was added to group \"$groupname\" successfully";
+    fi;
+
+    # add webuser to group
+    local webservername;
+    echo "Detecting webserver username ...";
+    if id -u www-data > /dev/null 2>&1; then
+        webservername="www-data";
+    elif id -u apache > /dev/null 2>&1; then
+        webservername="apache";
+    else
+        read -p "Enter webserver username to add it to \"$groupname\": " webservername
+    fi;
+    if [ -n "$webservername" ]; then
+        sudo usermod -a -G $groupname $webservername
+        echo "User \"$webservername\" was added to group \"$groupname\" successfully";
+    else
+        die "Webserver username is required";
+    fi;
+}
+
+
+
+# create site public directory
+function createSiteFolder
+{
+    echo "Create website public directory \"/var/www/$sitename\" ...";
+
+    # create
+    sudo mkdir -p /var/www/$sitename/log
+    echo "Done";
+
+    echo "Set website public directory owner and permissions ...";
+    #sudo chown -R $USER:$USER /var/www
+    sudo chown -R $username:$groupname /var/www/$sitename
+    #sudo chmod -R g+rw /var/www
+    sudo chmod -R 02775 /var/www/$sitename
+    echo "Done";
+}
+
+
+
+# add apache config
+function configApache
+{
+    echo "Configuring apache to make website available ...";
+
+    # set apache site config
+    echo "Writing apache config ...";
+    (
+        echo "<VirtualHost *:80>";
+        echo "    ServerAdmin admin@$sitename";
+        echo "    ServerName $sitename";
+        echo "    ServerAlias www.$sitename";
+        echo "    DocumentRoot /var/www/$sitename";
+        echo "    <Directory /var/www/$sitename/>";
+        echo "        Options Indexes FollowSymLinks MultiViews";
+        echo "        AllowOverride All";
+        echo "        Order allow,deny";
+        echo "        allow from all";
+        echo "    </Directory>";
+        echo "    #LogLevel info ssl:warn";
+        echo "    ErrorLog /var/www/$sitename/log/error.log";
+        echo "    CustomLog /var/www/$sitename/log/access.log combined";
+        echo "    #Include conf-available/serve-cgi-bin.conf";
+        echo "</VirtualHost>";
+    ) | sudo tee /etc/apache2/sites-available/$sitename.conf
+    echo "Done";
+    ## enable website
+    echo "Enabling website ...";
+    sudo a2ensite $sitename.conf
+    echo "Done";
+
+    # add apache config available (to avoid AH00558 error)
+    echo "Adding apache config available ...";
+    echo "ServerName $sitename" | sudo tee /etc/apache2/conf-available/$sitename.conf
+    echo "Done";
+    ## enable website config
+    echo "Enabling website config ...";
+    sudo a2enconf $sitename
+    echo "Done";
+
+    # update hosts
+    echo "Updating available hosts ...";
+    echo "127.0.0.1        $sitename" | sudo tee -a /etc/hosts;
+    echo "Done";
+
+    # restart apache
+    echo "Restart apache service ...";
+    sudo service apache2 restart
+    echo "Done";
+}
+
+
+
+# add mysql database
+function createDatabase
+{
+    echo "Creating database \"$sitename\" ...";
+
+    # check for running MySQL
+    UP=$(pgrep mysql | wc -l);
+    if [ "$UP" -eq 1 ]; then
+        ## get root password
+        local mysqlRootPassword;
+        read -s -p "Enter your MySQL password (ENTER for none): " mysqlRootPassword;
+        until mysql -u root -p$mysqlRootPassword  -e ";" ; do
+               read -s -p "Can't connect, please retry: " mysqlRootPassword
+        done;
+        ## create DB
+        if [ -n "$mysqlRootPassword" ]; then
+            mysql -uroot -p$mysqlRootPassword -e "create database $sitename"
+        else
+            mysql -uroot -e "create database $sitename"
+        fi;
+        echo "Done";
+    else
+        echo "MySQL is not running yet. Stop creating";
+    fi;
+}
+
+
+
+
+
+
+#-----------------------------------------------------------#
+#                           MAIN
+#-----------------------------------------------------------#
+
+# get params and options
+while getopts ":n:u:g:" opt; do
+    case $opt in
+        n) sitename="$OPTARG";;
+        u) username="$OPTARG";;
+        g) groupname="$OPTARG";;
+        \?) echo "Invalid option -$OPTARG" >&2;;
+    esac
+done
+
+# validate required params
+if [ -z "$sitename" ]; then
+    die "Website name cannot be empty";
+fi;
+if [ "$EUID" -ne 0 ]; then
+    die "Please run as root";
+fi;
+
+
+
+# create new group for current site
+createGroup $groupname $sitename;
+
+# add user to new group for current site
+addGroupUser;
+
+# create site public directory
+createSiteFolder;
+
+# add apache config
+configApache;
+
+# create database
+read -p "Would you like to create related MYSQL database (y/n)? " choice
+case "$choice" in
+    y|Y )
+        createDatabase;;
+    * );;
+esac
+
+
+
+# finish
+echo "";
+echo "Now you can see your new website at \"http://$sitename/\"";
+echo "All done. Have a nice day :)";
+echo "";
