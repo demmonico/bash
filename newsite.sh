@@ -148,13 +148,13 @@ function configApache
     echo "Done";
 
     # add apache config available (to avoid AH00558 error)
-    echo "Adding apache config available ...";
-    echo "ServerName $sitename" | sudo tee /etc/apache2/conf-available/$sitename.conf
-    echo "Done";
+    #echo "Adding apache config available ...";
+    #echo "ServerName $sitename" | sudo tee /etc/apache2/conf-available/$sitename.conf
+    #echo "Done";
     ## enable website config
-    echo "Enabling website config ...";
-    sudo a2enconf $sitename
-    echo "Done";
+    #echo "Enabling website config ...";
+    #sudo a2enconf $sitename
+    #echo "Done";
 
     # update hosts
     echo "Updating available hosts ...";
