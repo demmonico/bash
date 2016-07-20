@@ -74,9 +74,9 @@ function rmConfigApache
 
     # remove apache config available
     ## disable website config
-    echo "Disabling website config ...";
-    sudo a2disconf $sitename
-    echo "Done";
+    #echo "Disabling website config ...";
+    #sudo a2disconf $sitename
+    #echo "Done";
     ## delete conf file
     echo "Deleting apache config file ...";
     sudo rm -f -- /etc/apache2/conf-available/$sitename.conf;
