@@ -106,24 +106,40 @@ function rmConfigApache
 
 
 
+# get valid DB name
+function getDbName
+{
+    local t=$(echo $sitename | sed -r 's/[^A-Za-z0-9]+.*//g');
+    echo $t;
+}
+
+
+
 # remove database
 function rmDatabase
 {
     echo "Removing database \"$sitename\" ...";
 
-    # get root password
-    local mysqlRootPassword;
-    read -s -p "Enter your MySQL password (ENTER for none): " mysqlRootPassword;
-    until mysql -u root -p$mysqlRootPassword  -e ";" ; do
-           read -p "Can't connect, please retry: " mysqlRootPassword
-    done;
-    # remove DB
-    if [ -n "$mysqlRootPassword" ]; then
-        mysql -uroot -p$mysqlRootPassword -e "drop database $sitename"
+    # check for running MySQL
+    UP=$(pgrep mysql | wc -l);
+    if (( "$UP" < 1 )); then
+        echo "MySQL is not running yet. Stop removing";
     else
-        mysql -uroot -e "drop database $sitename"
+        # get root password
+        local mysqlRootPassword;
+        read -s -p "Enter your MySQL password (ENTER for none): " mysqlRootPassword;
+        until mysql -u root -p$mysqlRootPassword  -e ";" ; do
+               read -p "Can't connect, please retry: " mysqlRootPassword
+        done;
+        # remove DB
+        local dbName=$(getDbName);
+        if [ -n "$mysqlRootPassword" ]; then
+            mysql -uroot -p$mysqlRootPassword -e "drop database $dbName"
+        else
+            mysql -uroot -e "drop database $dbName"
+        fi;
+        echo "Done";
     fi;
-    echo "Done";
 }
 
 
