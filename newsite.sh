@@ -169,6 +169,15 @@ function configApache
 
 
 
+# get valid DB name
+function getDbName
+{
+    local t=$(echo $sitename | sed -r 's/[^A-Za-z0-9]+.*//g');
+    echo $t;
+}
+
+
+
 # add mysql database
 function createDatabase
 {
@@ -176,7 +185,9 @@ function createDatabase
 
     # check for running MySQL
     UP=$(pgrep mysql | wc -l);
-    if [ "$UP" -eq 1 ]; then
+    if (( "$UP" < 1 )); then
+        echo "MySQL is not running yet. Stop creating";
+    else
         ## get root password
         local mysqlRootPassword;
         read -s -p "Enter your MySQL password (ENTER for none): " mysqlRootPassword;
@@ -184,14 +195,13 @@ function createDatabase
                read -s -p "Can't connect, please retry: " mysqlRootPassword
         done;
         ## create DB
+        local dbName=$(getDbName);
         if [ -n "$mysqlRootPassword" ]; then
-            mysql -uroot -p$mysqlRootPassword -e "create database $sitename"
+            mysql -uroot -p$mysqlRootPassword -e "create database $dbName"
         else
-            mysql -uroot -e "create database $sitename"
+            mysql -uroot -e "create database $dbName"
         fi;
         echo "Done";
-    else
-        echo "MySQL is not running yet. Stop creating";
     fi;
 }
 
