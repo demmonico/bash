@@ -223,29 +223,26 @@ function createDatabase
 #        \?) echo "Invalid option -$OPTARG" >&2;;
 #    esac
 #done
-while getopts $# -gt 0; do
+while [ $# -gt 0]; do
     case "$1" in
         -f) isForceMode='true';;
         -n|--name)
-            shift
-            if getopts $# -gt 0; then
-                sitename="$1"
+            if $2 -gt 0; then
+                sitename="$2"
             fi
-            shift
+            shift 2
             ;;
         -u|--username) 
-            shift
-            if getopts $# -gt 0; then
-                username="$1"
+            if $2 -gt 0; then
+                username="$2"
             fi
-            shift
+            shift 2
             ;;
         -g|--groupname) 
-            shift
-            if getopts $# -gt 0; then
-                groupname="$1"
+            if $2 -gt 0; then
+                groupname="$2"
             fi
-            shift
+            shift 2
             ;;
         *) 
             echo "Invalid option -$1"
