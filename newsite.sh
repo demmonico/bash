@@ -220,7 +220,7 @@ while getopts ":fn:u:g:" opt; do
         n) sitename="$OPTARG";;
         u) username="$OPTARG";;
         g) groupname="$OPTARG";;
-        f) isForceMode="$OPTARG";;
+        f) isForceMode=1;;
         \?) echo "Invalid option -$OPTARG" >&2;;
     esac
 done
