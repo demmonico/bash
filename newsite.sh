@@ -215,12 +215,12 @@ function createDatabase
 #-----------------------------------------------------------#
 
 # get params and options
-while getopts ":fn:u:g:" opt; do
+while getopts ":n:u:g:f" opt; do
     case $opt in
         n) sitename="$OPTARG";;
         u) username="$OPTARG";;
         g) groupname="$OPTARG";;
-        f) isForceMode=1;;
+        f) isForceMode='true';;
         \?) echo "Invalid option -$OPTARG" >&2;;
     esac
 done
