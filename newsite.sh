@@ -215,7 +215,7 @@ function createDatabase
 #-----------------------------------------------------------#
 
 # get params and options
-while getopts ":f:n:u:g:" opt; do
+while getopts ":fn:u:g:" opt; do
     case $opt in
         n) sitename="$OPTARG";;
         u) username="$OPTARG";;
