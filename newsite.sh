@@ -223,7 +223,7 @@ function createDatabase
 #        \?) echo "Invalid option -$OPTARG" >&2;;
 #    esac
 #done
-while [ $# -gt 0]; do
+while [ $# -gt 0 ]; do
     case "$1" in
         -f) isForceMode='true';;
         -n|--name)
