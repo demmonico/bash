@@ -220,6 +220,7 @@ while getopts ":n:u:g:" opt; do
         n) sitename="$OPTARG";;
         u) username="$OPTARG";;
         g) groupname="$OPTARG";;
+        f) isForceMode="$OPTARG";;
         \?) echo "Invalid option -$OPTARG" >&2;;
     esac
 done
@@ -246,13 +247,15 @@ createSiteFolder;
 # add apache config
 configApache;
 
-# create database
-read -p "Would you like to create related MYSQL database (y/n)? " choice
-case "$choice" in
-    y|Y )
-        createDatabase;;
-    * );;
-esac
+# create database only at manual (not force) mode
+if [ -z "$isForceMode" ]; then
+    read -p "Would you like to create related MYSQL database (y/n)? " choice
+    case "$choice" in
+        y|Y )
+            createDatabase;;
+        * );;
+    esac
+fi;
 
 
 
