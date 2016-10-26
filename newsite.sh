@@ -62,11 +62,15 @@ function addGroupUser
     echo "Adding user to group ...";
 
     # set username
-    if [ -z "$username" ]; then
-        read -p "Enter username which will be added to group \"$groupname\": " username
-    fi;
-    if [ -z "$username" ]; then
-        die "Username required";
+    if [ -z "$1" ]; then
+        $username=$1;
+    else
+        if [ -z "$username" ]; then
+            read -p "Enter username which will be added to group \"$groupname\": " username
+        fi;
+        if [ -z "$username" ]; then
+            die "Username required";
+        fi;
     fi;
 
     # add user to group
@@ -269,7 +273,11 @@ fi;
 createGroup $groupname $sitename;
 
 # add user to new group for current site
-addGroupUser;
+if [ -z "$isForceMode" ]; then
+    addGroupUser $username;
+else
+    addGroupUser;
+fi;
 
 # create site public directory
 createSiteFolder;
