@@ -223,33 +223,37 @@ function createDatabase
 #        \?) echo "Invalid option -$OPTARG" >&2;;
 #    esac
 #done
-while [ $# -gt 0 ]; do
-    case "$1" in
+while [[ $# -gt 1 ]] 
+do
+        key="$1"
+    case $key in
         -f) isForceMode='true';;
         -n|--name)
-            if $2 -gt 0; then
-                sitename="$2"
+            if [ ! -z "$2" ]; then
+                export sitename="$2"
             fi
-            shift 2
+            shift
             ;;
-        -u|--username) 
-            if $2 -gt 0; then
-                username="$2"
+        -u|--username)
+            if [ ! -z "$2" ]; then
+                export username="$2"
             fi
-            shift 2
+            shift
             ;;
-        -g|--groupname) 
-            if $2 -gt 0; then
-                groupname="$2"
+        -g|--groupname)
+            if [ ! -z "$2" ]; then
+                export groupname="$2"
             fi
-            shift 2
+            shift
             ;;
-        *) 
+        *)
             echo "Invalid option -$1"
             break
             ;;
     esac
+        shift
 done
+
 
 # validate required params
 if [ -z "$sitename" ]; then
