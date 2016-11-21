@@ -63,14 +63,15 @@ function addGroupUser
 
     # set username
     if [ -z "$1" ]; then
-        $username=$1;
+        if [ -z "$isForceMode" ]; then
+            while [ -z "$username" ]; do
+                read -p "Enter username which will be added to group \"$groupname\": " username
+            done;
+        else
+            $username=$(whoami);
+        fi;
     else
-        if [ -z "$username" ]; then
-            read -p "Enter username which will be added to group \"$groupname\": " username
-        fi;
-        if [ -z "$username" ]; then
-            die "Username required";
-        fi;
+        $username=$1;
     fi;
 
     # add user to group
