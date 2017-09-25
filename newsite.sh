@@ -109,10 +109,9 @@ function addGroupUser
 # create site public directory
 function createSiteFolder
 {
+    # create website folder
     echo "Create website public directory \"/var/www/$sitename\" ...";
-
-    # create
-    sudo mkdir -p /var/www/$sitename/log
+    sudo mkdir -p /var/www/$sitename
     echo "Done";
 
     echo "Set website public directory owner and permissions ...";
@@ -120,6 +119,16 @@ function createSiteFolder
     sudo chown -R $username:$groupname /var/www/$sitename
     #sudo chmod -R g+rw /var/www
     sudo chmod -R 02775 /var/www/$sitename
+    echo "Done";
+    
+    # git init
+    echo "Initiate git ...";
+    git init
+    echo "Done";
+    
+    # create log folder
+    echo "Create website log directory \"/var/www/$sitename/log\" ...";
+    mkdir -p /var/www/$sitename/log
     echo "Done";
 }
 
