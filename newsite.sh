@@ -123,7 +123,7 @@ function createSiteFolder
     
     # git init
     echo "Initiate git ...";
-    git init
+    cd /var/www/$sitename && git init && cd -
     echo "Done";
     
     # create log folder
